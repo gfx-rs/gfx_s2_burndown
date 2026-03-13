@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Graphics S2 Burn-down Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --accent-primary: #4d79ff;
+            --accent-warning: #ff9900;
+            --accent-danger: #ff4d4d;
+            --border-radius: 8px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: var(--spacing-md);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0;
+        }
+
+        .api-key-section {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            background-color: var(--bg-tertiary);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+        }
+
+        .api-key-input {
+            padding: var(--spacing-sm);
+            border: 1px solid #555;
+            border-radius: var(--border-radius);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            width: 300px;
+        }
+
+        .api-key-button {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background-color: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .api-key-button:hover {
+            opacity: 0.9;
+        }
+
+        .dashboard-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .dashboard-title h2 {
+            font-size: 1.5rem;
+        }
+
+        .entry-count {
+            background-color: var(--accent-primary);
+            color: white;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .summary-stats {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            background-color: var(--bg-tertiary);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .entries-container {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            max-height: 70vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .entries-list {
+            list-style: none;
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .entry-item {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid #444;
+            transition: background-color 0.2s;
+        }
+
+        .entry-item:hover {
+            background-color: rgba(77, 121, 255, 0.1);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .entry-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-right: var(--spacing-md);
+        }
+
+        .entry-link {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        .entry-link:hover {
+            text-decoration: underline;
+        }
+
+        .entry-keywords {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .keyword {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .keyword.stalled {
+            background-color: #ff9900;
+            color: black;
+        }
+
+        .keyword.sec-high {
+            background-color: #ff4d4d;
+            color: white;
+        }
+
+        .keyword.ai-involved {
+            background-color: #9966ff;
+            color: white;
+        }
+
+        .entry-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            font-size: 0.9rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            font-weight: bold;
+        }
+
+        .last-activity {
+            display: flex;
+            justify-content: flex-end;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--spacing-lg);
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .error {
+            background-color: rgba(255, 77, 77, 0.2);
+            border-left: 4px solid var(--accent-danger);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        }
+
+        @media (max-width: 768px) {
+            .entry-details {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+
+            .api-key-section {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .summary-stats {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Platform Graphics S2 Burn-down Dashboard</h1>
+            <div class="api-key-section">
+                <input type="password" id="apiKeyInput" class="api-key-input" placeholder="Enter Bugzilla API Key">
+                <button id="apiKeyButton" class="api-key-button">Save Key</button>
+            </div>
+        </header>
+
+        <div class="dashboard-title">
+            <h2>Active S2 Reports</h2>
+            <div class="entry-count">Entries: <span id="entryCount">0</span></div>
+        </div>
+
+        <div class="summary-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="secHighCount">0</div>
+                <div class="stat-label">Sec-High Reports</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stalledCount">0</div>
+                <div class="stat-label">Stalled Reports</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="aiInvolvedCount">0</div>
+                <div class="stat-label">AI-Involved Reports</div>
+            </div>
+        </div>
+
+        <div class="entries-container">
+            <ul id="entriesList" class="entries-list">
+                <li class="loading">Loading reports...</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Cookie management functions
+        function setCookie(name, value, days) {
+            const expires = days ? `; expires=${new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString()}` : '';
+            document.cookie = `${name}=${encodeURIComponent(value)}${expires}; path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') {
+                    c = c.substring(1, c.length);
+                }
+                if (c.indexOf(nameEQ) === 0) {
+                    return decodeURIComponent(c.substring(nameEQ.length, c.length));
+                }
+            }
+            return null;
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        // Check if a report is recent (within last 2 years)
+        function isRecent(report) {
+            const lastActivityDate = new Date(report.last_change_time);
+            const twoYearsAgo = new Date();
+            twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+            return lastActivityDate >= twoYearsAgo;
+        }
+
+        // Fetch and display bugzilla data
+        async function fetchBugzillaData(apiKey = null) {
+            const entriesList = document.getElementById('entriesList');
+            const entryCount = document.getElementById('entryCount');
+            const secHighCount = document.getElementById('secHighCount');
+            const stalledCount = document.getElementById('stalledCount');
+            const aiInvolvedCount = document.getElementById('aiInvolvedCount');
+
+            try {
+                // Clear previous content
+                entriesList.innerHTML = '<li class="loading">Loading reports...</li>';
+
+                // Components to query
+                const components = [
+                    'Graphics',
+                    'Graphics: Layers',
+                    'Graphics: Text',
+                    'Graphics: WebGPU',
+                    'Graphics: WebRender',
+                    'Graphics: Canvas2D',
+                    'Graphics: CanvasWebGL',
+                    'Graphics: Color Management',
+                    'Graphics: ImageLib',
+                    'Graphics: Image Blocking',
+                    'Web Painting'
+                ];
+
+                let allReports = [];
+
+                // Build query for each component
+                for (const component of components) {
+                    const url = new URL('https://bugzilla.mozilla.org/rest/bug');
+                    url.searchParams.append('component', component);
+                    url.searchParams.append('severity', 'S2');
+                    url.searchParams.append('status', 'NEW');
+                    url.searchParams.append('status', 'ASSIGNED');
+                    url.searchParams.append('status', 'REOPENED');
+                    url.searchParams.append('keywords', 'meta');
+                    url.searchParams.append('keywords_type', 'notsubstring');
+
+                    if (apiKey) {
+                        url.searchParams.append('api_key', apiKey);
+                    }
+
+                    try {
+                        const response = await fetch(url.toString());
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const data = await response.json();
+
+                        // Filter reports for recent activity
+                        const recentReports = data.bugs.filter(isRecent);
+                        allReports = allReports.concat(recentReports);
+                    } catch (error) {
+                        console.error(`Error fetching component ${component}:`, error);
+                    }
+                }
+
+                // Sort reports by last change time (newest first)
+                allReports.sort((a, b) => new Date(b.last_change_time) - new Date(a.last_change_time));
+
+                // Update entry count
+                entryCount.textContent = allReports.length;
+
+                // Count different keyword types
+                let secHighCountValue = 0;
+                let stalledCountValue = 0;
+                let aiInvolvedCountValue = 0;
+
+                allReports.forEach(report => {
+                    if (report.keywords.includes('sec-high')) {
+                        secHighCountValue++;
+                    }
+                    if (report.keywords.includes('stalled')) {
+                        stalledCountValue++;
+                    }
+                    if (report.keywords.includes('ai-involved')) {
+                        aiInvolvedCountValue++;
+                    }
+                });
+
+                // Update summary stats
+                secHighCount.textContent = secHighCountValue;
+                stalledCount.textContent = stalledCountValue;
+                aiInvolvedCount.textContent = aiInvolvedCountValue;
+
+                // Display reports
+                if (allReports.length === 0) {
+                    entriesList.innerHTML = '<li class="loading">No active S2 reports found</li>';
+                    return;
+                }
+
+                entriesList.innerHTML = '';
+
+                allReports.forEach(report => {
+                    const entryItem = document.createElement('li');
+                    entryItem.className = 'entry-item';
+
+                    // Check for keywords
+                    const hasStalled = report.keywords.includes('stalled');
+                    const hasSecHigh = report.keywords.includes('sec-high');
+                    const hasAiInvolved = report.keywords.includes('ai-involved');
+
+                    let keywordHtml = '';
+                    if (hasStalled) {
+                        keywordHtml += '<span class="keyword stalled">stalled</span>';
+                    }
+                    if (hasSecHigh) {
+                        keywordHtml += '<span class="keyword sec-high">sec-high</span>';
+                    }
+                    if (hasAiInvolved) {
+                        keywordHtml += '<span class="keyword ai-involved">ai-involved</span>';
+                    }
+
+                    entryItem.innerHTML = `
+                        <div class="entry-header">
+                            <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=${report.id}"
+                               target="_blank" class="entry-link entry-title">${report.summary}</a>
+                        </div>
+                        ${keywordHtml ? `<div class="entry-keywords">${keywordHtml}</div>` : ''}
+                        <div class="entry-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Report</span>
+                                <span class="detail-value">#${report.id}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Component</span>
+                                <span class="detail-value">${report.component}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Status</span>
+                                <span class="detail-value">${report.status}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Priority</span>
+                                <span class="detail-value">${report.priority}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Severity</span>
+                                <span class="detail-value">${report.severity}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Assignee</span>
+                                <span class="detail-value">${report.assigned_to_detail ? report.assigned_to_detail.name : 'Unassigned'}</span>
+                            </div>
+                        </div>
+                        <div class="last-activity">
+                            Last activity: ${formatDate(report.last_change_time)}
+                        </div>
+                    `;
+
+                    entriesList.appendChild(entryItem);
+                });
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                entriesList.innerHTML = `<li class="error">Error loading reports: ${error.message}</li>`;
+            }
+        }
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load API key from cookie if available
+            const savedApiKey = getCookie('platform_graphics_s2_bugzilla_api_key');
+
+            // Set the input field value to the saved API key (this part is correct)
+            if (savedApiKey) {
+                document.getElementById('apiKeyInput').value = savedApiKey;
+            }
+
+            // Set up API key button
+            document.getElementById('apiKeyButton').addEventListener('click', function() {
+                const apiKey = document.getElementById('apiKeyInput').value.trim();
+                if (apiKey) {
+                    setCookie('platform_graphics_s2_bugzilla_api_key', apiKey, 30); // Save for 30 days
+                    fetchBugzillaData(apiKey);
+                } else {
+                    fetchBugzillaData(); // Fetch without API key
+                }
+            });
+
+            // Fetch data on page load - FIXED: Pass the actual saved API key value
+            fetchBugzillaData(savedApiKey);
+        });
+    </script>
+</body>
+</html>
