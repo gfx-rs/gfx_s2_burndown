@@ -203,7 +203,7 @@
 
         .table-header {
             display: grid;
-            grid-template-columns: 80px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+            grid-template-columns: 80px 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
             gap: 4px;
             padding: 16px;
             background-color: var(--bg-tertiary);
@@ -244,7 +244,7 @@
 
         .bug-entry {
             display: grid;
-            grid-template-columns: 80px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+            grid-template-columns: 80px 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
             gap: 4px;
             padding: 16px;
             border-bottom: 1px solid var(--border-color);
@@ -492,9 +492,6 @@
                 </div>
                 <div class="table-header-item" onclick="sortTable('status')" data-sort="status">
                     Status <span class="sort-icon" id="sort-status">⇅</span>
-                </div>
-                <div class="table-header-item" onclick="sortTable('severity')" data-sort="severity">
-                    Severity <span class="sort-icon" id="sort-severity">⇅</span>
                 </div>
                 <div class="table-header-item" onclick="sortTable('priority')" data-sort="priority">
                     Priority <span class="sort-icon" id="sort-priority">⇅</span>
@@ -762,8 +759,10 @@
 
             // Sort bugs
             filteredBugs.sort((a, b) => {
-                let aValue = a[column];
-                let bValue = b[column];
+                const fieldMap = { assignee: 'assigned_to', created: 'creation_time', updated: 'last_change_time' };
+                const field = fieldMap[column] || column;
+                let aValue = a[field];
+                let bValue = b[field];
 
                 // Handle null/undefined values
                 if (aValue === null || aValue === undefined) aValue = '';
@@ -894,7 +893,6 @@
                         </div>
                         <div class="bug-data">${escapeHtml(bug.component || 'N/A')}</div>
                         <div class="bug-data ${statusClass}">${escapeHtml(bug.status || 'N/A')}</div>
-                        <div class="bug-data">${escapeHtml(bug.severity || 'N/A')}</div>
                         <div class="bug-data ${priorityClass}">${escapeHtml(bug.priority || 'N/A')}</div>
                         <div class="bug-data" title="${escapeHtml(bug.assigned_to || 'Unassigned')}">
                             ${escapeHtml(bug.assigned_to || '-')}
