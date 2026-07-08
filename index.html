@@ -20,9 +20,6 @@
             --success-color: #10b981;
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
-            --stalled-bg: #fef3c7;
-            --sec-high-bg: #fef2f2;
-            --ai-involved-bg: #ecfdf5;
         }
 
         @media (prefers-color-scheme: dark) {
@@ -36,9 +33,6 @@
                 --border-color: #404040;
                 --accent-color: #60a5fa;
                 --accent-hover: #3b82f6;
-                --stalled-bg: #451a03;
-                --sec-high-bg: #7f1d1d;
-                --ai-involved-bg: #064e3b;
             }
         }
 
@@ -122,6 +116,43 @@
             color: var(--text-muted);
         }
 
+        /* Tag count boxes double as filter toggles: bright when enabled,
+           their base color when disabled. */
+        .toggle-card {
+            cursor: pointer;
+            user-select: none;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+            background-color: var(--toggle-base);
+            transition: background-color 0.2s, opacity 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+
+        .toggle-card.enabled {
+            background-color: var(--toggle-bright);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+        }
+
+        .toggle-card:not(.enabled) {
+            opacity: 0.6;
+        }
+
+        .toggle-card:hover {
+            transform: translateY(-1px);
+        }
+
+        .toggle-card .icon,
+        .toggle-card .count,
+        .toggle-card .label {
+            color: #ffffff;
+        }
+
+        .toggle-other        { --toggle-base: #2f6fed; --toggle-bright: #4a86ff; }
+        .toggle-stalled      { --toggle-base: #d97706; --toggle-bright: #f59e0b; }
+        .toggle-sec-high     { --toggle-base: #dc2626; --toggle-bright: #f04444; }
+        .toggle-sec-moderate { --toggle-base: #ea580c; --toggle-bright: #f97316; }
+        .toggle-sec-low      { --toggle-base: #6b7280; --toggle-bright: #98a1af; }
+        .toggle-ai           { --toggle-base: #7c3aed; --toggle-bright: #9d5cff; }
+
         .controls {
             display: flex;
             gap: 20px;
@@ -155,21 +186,6 @@
             border-color: var(--accent-color);
         }
 
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .checkbox-label input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: var(--accent-color);
-        }
-
         .refresh-btn {
             background-color: var(--accent-color);
             color: white;
@@ -192,6 +208,26 @@
         .refresh-btn:disabled {
             background-color: var(--text-muted);
             cursor: not-allowed;
+        }
+
+        .reset-btn {
+            background-color: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+
+        .reset-btn:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
         }
 
         .table-container {
@@ -337,18 +373,6 @@
             opacity: 0.5;
         }
 
-        .entry-stalled {
-            background-color: var(--stalled-bg);
-        }
-
-        .entry-sec-high {
-            background-color: var(--sec-high-bg);
-        }
-
-        .entry-ai-involved {
-            background-color: var(--ai-involved-bg);
-        }
-
         .loading {
             text-align: center;
             padding: 40px;
@@ -407,7 +431,7 @@
                     <p class="subtitle">Mozilla Graphics S2 Bug Tracking</p>
                 </div>
                 <div class="stats">
-                    <div class="stat-card">
+                    <div class="stat-card toggle-card enabled toggle-other" data-tag="untagged" onclick="toggleTagFilter('untagged')" title="Toggle visibility of untagged bugs (those without any of the tags at right)">
                         <span class="icon">
                             <i class="fas fa-bug"></i>
                         </span>
@@ -416,8 +440,8 @@
                             <div class="label">Total Bugs</div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <span class="icon" style="color: #d97706;">
+                    <div class="stat-card toggle-card enabled toggle-stalled" data-tag="stalled" onclick="toggleTagFilter('stalled')" title="Toggle visibility of stalled bugs">
+                        <span class="icon">
                             <i class="fas fa-clock"></i>
                         </span>
                         <div>
@@ -425,8 +449,8 @@
                             <div class="label">Stalled</div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <span class="icon" style="color: #dc2626;">
+                    <div class="stat-card toggle-card enabled toggle-sec-high" data-tag="sec-high" onclick="toggleTagFilter('sec-high')" title="Toggle visibility of sec-high bugs">
+                        <span class="icon">
                             <i class="fas fa-shield-alt"></i>
                         </span>
                         <div>
@@ -434,8 +458,8 @@
                             <div class="label">Sec-High</div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <span class="icon" style="color: #ea580c;">
+                    <div class="stat-card toggle-card enabled toggle-sec-moderate" data-tag="sec-moderate" onclick="toggleTagFilter('sec-moderate')" title="Toggle visibility of sec-moderate bugs">
+                        <span class="icon">
                             <i class="fas fa-shield-alt"></i>
                         </span>
                         <div>
@@ -443,8 +467,8 @@
                             <div class="label">Sec-Moderate</div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <span class="icon" style="color: #6b7280;">
+                    <div class="stat-card toggle-card enabled toggle-sec-low" data-tag="sec-low" onclick="toggleTagFilter('sec-low')" title="Toggle visibility of sec-low bugs">
+                        <span class="icon">
                             <i class="fas fa-shield-alt"></i>
                         </span>
                         <div>
@@ -452,8 +476,8 @@
                             <div class="label">Sec-Low</div>
                         </div>
                     </div>
-                    <div class="stat-card">
-                        <span class="icon" style="color: #7c3aed;">
+                    <div class="stat-card toggle-card enabled toggle-ai" data-tag="ai-involved" onclick="toggleTagFilter('ai-involved')" title="Toggle visibility of AI-involved bugs">
+                        <span class="icon">
                             <i class="fas fa-brain"></i>
                         </span>
                         <div>
@@ -472,10 +496,12 @@
                         Refresh
                     </button>
                 </div>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="hideSecurity" onchange="toggleSecurityHidden()">
-                    Hide security-related entries
-                </label>
+                <div class="control-group">
+                    <button class="reset-btn" onclick="resetFilters()" title="Re-enable all filter toggles">
+                        <i class="fas fa-filter-circle-xmark"></i>
+                        Reset filters
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -537,7 +563,19 @@
         let filteredBugs = [];
         let sortColumn = 'id';
         let sortDirection = 'desc';
-        let hideSecurity = false;
+
+        // Keyword-backed filter toggles; all enabled (visible) by default.
+        const TAG_KEYWORDS = ['stalled', 'sec-high', 'sec-moderate', 'sec-low', 'ai-involved'];
+        // The 'untagged' pseudo-filter (the first tile) governs entries that
+        // carry none of TAG_KEYWORDS.
+        const tagFilters = {
+            'untagged': true,
+            'stalled': true,
+            'sec-high': true,
+            'sec-moderate': true,
+            'sec-low': true,
+            'ai-involved': true
+        };
 
         // Cookie utilities
         function setCookie(name, value, days = 365) {
@@ -585,12 +623,6 @@
             return date.toISOString();
         }
 
-        // Check if bug has security tags (any sec-* keyword)
-        function hasSecurityTags(bug) {
-            const keywords = bug.keywords || [];
-            return keywords.some(kw => kw.startsWith('sec-'));
-        }
-
         // Filter bugs by date (within 2 years)
         function isRecentActivity(bug) {
             // If no last_change_time, check creation_time
@@ -611,13 +643,6 @@
             const storedApiKey = getCookie('bugzilla_api_key');
             if (storedApiKey) {
                 document.getElementById('apiKeyInput').value = storedApiKey;
-            }
-
-            // Load security hide setting
-            const hideSec = getCookie('hide_security');
-            if (hideSec === 'true') {
-                hideSecurity = true;
-                document.getElementById('hideSecurity').checked = true;
             }
 
             // Initial load
@@ -677,14 +702,6 @@
 
             console.log(`Bugs after date filter: ${recentBugs.length}`);
 
-            // Filter out security tags (sec-* keywords) if configured
-            if (hideSecurity) {
-                const withSec = recentBugs.filter(bug => hasSecurityTags(bug));
-                const filtered = recentBugs.filter(bug => !hasSecurityTags(bug));
-                console.log(`Bugs after security filter: ${filtered.length}, hidden: ${withSec.length}`);
-                return filtered;
-            }
-
             return recentBugs;
         }
 
@@ -702,10 +719,9 @@
             refreshBtn.disabled = true;
 
             try {
-                filteredBugs = await fetchBugs(apiKey);
-                allBugs = [...filteredBugs];
-                sortTable(sortColumn);
-                updateStats();
+                allBugs = await fetchBugs(apiKey);
+                updateSortIcons();
+                applyTagFilters();
             } catch (error) {
                 console.error('Error fetching bugs:', error);
                 bugList.innerHTML = `
@@ -720,47 +736,67 @@
             }
         }
 
-        // Toggle security visibility
-        function toggleSecurityHidden() {
-            hideSecurity = document.getElementById('hideSecurity').checked;
-            setCookie('hide_security', hideSecurity.toString());
+        // A bug is visible if any tag it carries is toggled on. Bugs with none
+        // of TAG_KEYWORDS are governed by the 'untagged' toggle (first tile).
+        function isBugVisible(bug) {
+            const keywords = bug.keywords || [];
+            const present = TAG_KEYWORDS.filter(tag => keywords.includes(tag));
+            if (present.length === 0) return tagFilters['untagged'];
+            return present.some(tag => tagFilters[tag]);
+        }
 
-            // Apply filter to allBugs
-            if (hideSecurity) {
-                filteredBugs = allBugs.filter(bug => !hasSecurityTags(bug));
-            } else {
-                filteredBugs = [...allBugs];
-            }
+        // Toggle a tag filter and refresh the view
+        function toggleTagFilter(tag) {
+            tagFilters[tag] = !tagFilters[tag];
+            const card = document.querySelector(`.toggle-card[data-tag="${tag}"]`);
+            if (card) card.classList.toggle('enabled', tagFilters[tag]);
+            applyTagFilters();
+        }
 
-            sortTable(sortColumn);
+        // Re-enable every filter toggle, showing all entries
+        function resetFilters() {
+            Object.keys(tagFilters).forEach(tag => { tagFilters[tag] = true; });
+            document.querySelectorAll('.toggle-card').forEach(card => card.classList.add('enabled'));
+            applyTagFilters();
+        }
+
+        // Recompute the visible set from the tag filters, then sort + render
+        function applyTagFilters() {
+            filteredBugs = allBugs.filter(isBugVisible);
+            applySort();
             updateStats();
         }
 
-        // Sort table
-        function sortTable(column) {
-            if (sortColumn === column) {
-                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortColumn = column;
-                sortDirection = 'desc'; // Default to descending for new columns
-            }
-
-            // Update sort icons
+        // Reflect the current sort column/direction in the header icons
+        function updateSortIcons() {
             document.querySelectorAll('.sort-icon').forEach(icon => {
                 icon.parentElement.classList.remove('sorted');
                 icon.textContent = '⇅';
             });
 
-            const currentSortIcon = document.getElementById(`sort-${column}`);
+            const currentSortIcon = document.getElementById(`sort-${sortColumn}`);
             if (currentSortIcon) {
                 currentSortIcon.parentElement.classList.add('sorted');
                 currentSortIcon.textContent = sortDirection === 'asc' ? '↑' : '↓';
             }
+        }
 
-            // Sort bugs
+        // Sort filteredBugs by the current column/direction, then render
+        function applySort() {
+            // Map UI column keys to their actual Bugzilla bug fields
+            const fieldMap = {
+                id: 'id',
+                title: 'summary',
+                component: 'component',
+                status: 'status',
+                priority: 'priority',
+                assignee: 'assigned_to',
+                created: 'creation_time',
+                updated: 'last_change_time'
+            };
+            const field = fieldMap[sortColumn] || sortColumn;
+
             filteredBugs.sort((a, b) => {
-                const fieldMap = { assignee: 'assigned_to', created: 'creation_time', updated: 'last_change_time' };
-                const field = fieldMap[column] || column;
                 let aValue = a[field];
                 let bValue = b[field];
 
@@ -769,7 +805,7 @@
                 if (bValue === null || bValue === undefined) bValue = '';
 
                 // For dates, compare as timestamps
-                if (column === 'created' || column === 'updated') {
+                if (sortColumn === 'created' || sortColumn === 'updated') {
                     aValue = new Date(aValue).getTime();
                     bValue = new Date(bValue).getTime();
                 }
@@ -788,37 +824,31 @@
             renderBugs();
         }
 
-        // Update statistics
-        function updateStats() {
-            const totalCount = filteredBugs.length;
-            const stalledCount = filteredBugs.filter(bug => {
-                const keywords = bug.keywords || [];
-                return keywords.includes('stalled');
-            }).length;
-            const secHighCount = filteredBugs.filter(bug => {
-                const keywords = bug.keywords || [];
-                // Count ONLY bugs with 'sec-high' keyword, not other sec-* keywords
-                return keywords.includes('sec-high');
-            }).length;
-            const secModerateCount = filteredBugs.filter(bug => {
-                const keywords = bug.keywords || [];
-                return keywords.includes('sec-moderate');
-            }).length;
-            const secLowCount = filteredBugs.filter(bug => {
-                const keywords = bug.keywords || [];
-                return keywords.includes('sec-low');
-            }).length;
-            const aiInvolvedCount = filteredBugs.filter(bug => {
-                const keywords = bug.keywords || [];
-                return keywords.includes('ai-involved');
-            }).length;
+        // Handle a header click: update the column/direction, then re-sort
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'desc'; // Default to descending for new columns
+            }
 
-            document.getElementById('totalCount').textContent = totalCount;
-            document.getElementById('stalledCount').textContent = stalledCount;
-            document.getElementById('secHighCount').textContent = secHighCount;
-            document.getElementById('secModerateCount').textContent = secModerateCount;
-            document.getElementById('secLowCount').textContent = secLowCount;
-            document.getElementById('aiInvolvedCount').textContent = aiInvolvedCount;
+            updateSortIcons();
+            applySort();
+        }
+
+        // Update statistics. Total reflects the currently visible set; the
+        // per-tag counts are a stable inventory of the full fetched dataset.
+        function updateStats() {
+            const countWithKeyword = keyword =>
+                allBugs.filter(bug => (bug.keywords || []).includes(keyword)).length;
+
+            document.getElementById('totalCount').textContent = filteredBugs.length;
+            document.getElementById('stalledCount').textContent = countWithKeyword('stalled');
+            document.getElementById('secHighCount').textContent = countWithKeyword('sec-high');
+            document.getElementById('secModerateCount').textContent = countWithKeyword('sec-moderate');
+            document.getElementById('secLowCount').textContent = countWithKeyword('sec-low');
+            document.getElementById('aiInvolvedCount').textContent = countWithKeyword('ai-involved');
         }
 
         // Render bugs
@@ -842,13 +872,6 @@
                 const hasSecModerate = keywords.includes('sec-moderate');
                 const hasSecLow = keywords.includes('sec-low');
                 const hasAiInvolved = keywords.includes('ai-involved');
-                const hasSecurityTags = hasSecHigh || hasSecModerate || hasSecLow; // sec-* tags are security tags
-
-                // Build entry class
-                let entryClass = 'bug-entry';
-                if (hasStalled) entryClass += ' entry-stalled';
-                if (hasSecurityTags) entryClass += ' entry-sec-high';
-                if (hasAiInvolved) entryClass += ' entry-ai-involved';
 
                 // Tag HTML - show only the specific keywords that are present
                 let tagsHtml = '';
@@ -883,7 +906,7 @@
                 if (isClosed) statusClass = 'status-closed';
 
                 return `
-                    <div class="${entryClass}">
+                    <div class="bug-entry">
                         <div class="bug-number">${bug.id}</div>
                         <div class="bug-title">
                             <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=${bug.id}" target="_blank" rel="noopener">
