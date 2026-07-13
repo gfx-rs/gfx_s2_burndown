@@ -315,6 +315,13 @@
             line-height: 1.4;
         }
 
+        .bug-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
         .bug-data {
             color: var(--text-secondary);
             white-space: nowrap;
@@ -873,22 +880,27 @@
                 const hasSecLow = keywords.includes('sec-low');
                 const hasAiInvolved = keywords.includes('ai-involved');
 
-                // Tag HTML - show only the specific keywords that are present
+                // Tag HTML - show only the specific keywords that are present.
+                // Order: security tags first (high -> moderate -> low), then
+                // stalled, and finally AI-involved.
                 let tagsHtml = '';
-                if (hasStalled) {
-                    tagsHtml += `<span class="tag tag-stalled" title="Has stalled keyword"><i class="fas fa-clock"></i> Stalled</span> `;
-                }
                 if (hasSecHigh) {
-                    tagsHtml += `<span class="tag tag-sec-high" title="Has sec-high keyword"><i class="fas fa-shield-alt"></i> sec-high</span> `;
+                    tagsHtml += `<span class="tag tag-sec-high" title="Has sec-high keyword"><i class="fas fa-shield-alt"></i> sec-high</span>`;
                 }
                 if (hasSecModerate) {
-                    tagsHtml += `<span class="tag tag-sec-moderate" title="Has sec-moderate keyword"><i class="fas fa-shield-alt"></i> sec-moderate</span> `;
+                    tagsHtml += `<span class="tag tag-sec-moderate" title="Has sec-moderate keyword"><i class="fas fa-shield-alt"></i> sec-moderate</span>`;
                 }
                 if (hasSecLow) {
-                    tagsHtml += `<span class="tag tag-sec-low" title="Has sec-low keyword"><i class="fas fa-shield-alt"></i> sec-low</span> `;
+                    tagsHtml += `<span class="tag tag-sec-low" title="Has sec-low keyword"><i class="fas fa-shield-alt"></i> sec-low</span>`;
+                }
+                if (hasStalled) {
+                    tagsHtml += `<span class="tag tag-stalled" title="Has stalled keyword"><i class="fas fa-clock"></i> Stalled</span>`;
                 }
                 if (hasAiInvolved) {
-                    tagsHtml += `<span class="tag tag-ai-involved" title="Has AI-involved keyword"><i class="fas fa-brain"></i> AI-Involved</span> `;
+                    tagsHtml += `<span class="tag tag-ai-involved" title="Has AI-involved keyword"><i class="fas fa-brain"></i> AI-Involved</span>`;
+                }
+                if (tagsHtml) {
+                    tagsHtml = `<div class="bug-tags">${tagsHtml}</div>`;
                 }
 
                 // Priority classes
@@ -909,10 +921,10 @@
                     <div class="bug-entry">
                         <div class="bug-number">${bug.id}</div>
                         <div class="bug-title">
+                            ${tagsHtml}
                             <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=${bug.id}" target="_blank" rel="noopener">
                                 ${escapeHtml(bug.summary)}
                             </a>
-                            ${tagsHtml}
                         </div>
                         <div class="bug-data">${escapeHtml(bug.component || 'N/A')}</div>
                         <div class="bug-data ${statusClass}">${escapeHtml(bug.status || 'N/A')}</div>
