@@ -146,6 +146,27 @@
             color: #ffffff;
         }
 
+        /* The three security tiles are grouped so a shared caption can sit
+           centered beneath just them. */
+        .security-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .security-tiles {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .security-note {
+            text-align: center;
+            font-size: 11px;
+            font-style: italic;
+            color: var(--text-muted);
+        }
+
         .toggle-other        { --toggle-base: #2f6fed; --toggle-bright: #4a86ff; }
         .toggle-stalled      { --toggle-base: #d97706; --toggle-bright: #f59e0b; }
         .toggle-sec-high     { --toggle-base: #dc2626; --toggle-bright: #f04444; }
@@ -239,7 +260,7 @@
 
         .table-header {
             display: grid;
-            grid-template-columns: 80px 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
+            grid-template-columns: 80px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
             gap: 4px;
             padding: 16px;
             background-color: var(--bg-tertiary);
@@ -280,7 +301,7 @@
 
         .bug-entry {
             display: grid;
-            grid-template-columns: 80px 2fr 1fr 1fr 1fr 1fr 1fr 1fr;
+            grid-template-columns: 80px 2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
             gap: 4px;
             padding: 16px;
             border-bottom: 1px solid var(--border-color);
@@ -417,10 +438,36 @@
                 justify-content: center;
             }
 
-            .table-header,
+            /* The multi-column grid can't stay legible on a phone, so each bug
+               becomes a stacked, labeled card and the shared header is hidden.
+               This scales to any number of columns without re-tuning a grid. */
+            .table-header {
+                display: none;
+            }
+
             .bug-entry {
-                grid-template-columns: 50px 1.5fr 1fr 1fr;
-                grid-template-rows: 1fr 1fr;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .bug-entry .bug-number::before {
+                content: "Bug #";
+                font-weight: 600;
+                color: var(--text-secondary);
+            }
+
+            .bug-data[data-label]::before {
+                content: attr(data-label) ": ";
+                font-weight: 600;
+                color: var(--text-secondary);
+            }
+
+            /* Let stacked values wrap instead of truncating with an ellipsis. */
+            .bug-data {
+                white-space: normal;
+                overflow: visible;
+                text-overflow: clip;
             }
 
             .bug-list {
@@ -456,32 +503,37 @@
                             <div class="label">Stalled</div>
                         </div>
                     </div>
-                    <div class="stat-card toggle-card enabled toggle-sec-high" data-tag="sec-high" onclick="toggleTagFilter('sec-high')" title="Toggle visibility of sec-high bugs">
-                        <span class="icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </span>
-                        <div>
-                            <span class="count" id="secHighCount">0</span>
-                            <div class="label">Sec-High</div>
+                    <div class="security-group">
+                        <div class="security-tiles">
+                            <div class="stat-card toggle-card enabled toggle-sec-high" data-tag="sec-high" onclick="toggleTagFilter('sec-high')" title="Toggle visibility of sec-high bugs">
+                                <span class="icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </span>
+                                <div>
+                                    <span class="count" id="secHighCount">0</span>
+                                    <div class="label">Sec-High</div>
+                                </div>
+                            </div>
+                            <div class="stat-card toggle-card enabled toggle-sec-moderate" data-tag="sec-moderate" onclick="toggleTagFilter('sec-moderate')" title="Toggle visibility of sec-moderate bugs">
+                                <span class="icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </span>
+                                <div>
+                                    <span class="count" id="secModerateCount">0</span>
+                                    <div class="label">Sec-Moderate</div>
+                                </div>
+                            </div>
+                            <div class="stat-card toggle-card enabled toggle-sec-low" data-tag="sec-low" onclick="toggleTagFilter('sec-low')" title="Toggle visibility of sec-low bugs">
+                                <span class="icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </span>
+                                <div>
+                                    <span class="count" id="secLowCount">0</span>
+                                    <div class="label">Sec-Low</div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="stat-card toggle-card enabled toggle-sec-moderate" data-tag="sec-moderate" onclick="toggleTagFilter('sec-moderate')" title="Toggle visibility of sec-moderate bugs">
-                        <span class="icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </span>
-                        <div>
-                            <span class="count" id="secModerateCount">0</span>
-                            <div class="label">Sec-Moderate</div>
-                        </div>
-                    </div>
-                    <div class="stat-card toggle-card enabled toggle-sec-low" data-tag="sec-low" onclick="toggleTagFilter('sec-low')" title="Toggle visibility of sec-low bugs">
-                        <span class="icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </span>
-                        <div>
-                            <span class="count" id="secLowCount">0</span>
-                            <div class="label">Sec-Low</div>
-                        </div>
+                        <div class="security-note"><hr>(security filters ignore severity)</div>
                     </div>
                     <div class="stat-card toggle-card enabled toggle-ai" data-tag="ai-involved" onclick="toggleTagFilter('ai-involved')" title="Toggle visibility of AI-involved bugs">
                         <span class="icon">
@@ -528,6 +580,9 @@
                 </div>
                 <div class="table-header-item" onclick="sortTable('priority')" data-sort="priority">
                     Priority <span class="sort-icon" id="sort-priority">⇅</span>
+                </div>
+                <div class="table-header-item" onclick="sortTable('severity')" data-sort="severity">
+                    Severity <span class="sort-icon" id="sort-severity">⇅</span>
                 </div>
                 <div class="table-header-item" onclick="sortTable('assignee')" data-sort="assignee">
                     Assignee <span class="sort-icon" id="sort-assignee">⇅</span>
@@ -656,11 +711,15 @@
             refreshData();
         }
 
-        // Fetch data from Bugzilla API
-        async function fetchBugs(apiKey) {
+        // Keywords that mark a bug as security-relevant. These are surfaced
+        // regardless of severity (see fetchBugs) so open security issues aren't
+        // hidden just because they lack, or carry a non-S2, severity rating.
+        const SECURITY_KEYWORDS = ['sec-high', 'sec-moderate', 'sec-low'];
+
+        // Build the shared query params for a Bugzilla component query
+        function buildBaseParams(apiKey) {
             const params = new URLSearchParams({
                 bug_status: '__open__',
-                bug_severity: 'S2',
                 include_fields: 'id,summary,component,status,priority,severity,assigned_to,creation_time,last_change_time,keywords',
                 limit: 0
             });
@@ -674,6 +733,11 @@
                 params.append('api_key', apiKey);
             }
 
+            return params;
+        }
+
+        // Run a single Bugzilla query and return its bugs array
+        async function queryBugs(params) {
             console.log('Fetching from URL:', `${BUGZILLA_URL}?${params.toString()}`);
             const response = await fetch(`${BUGZILLA_URL}?${params.toString()}`);
             const data = await response.json();
@@ -683,10 +747,43 @@
                 throw new Error(data.error?.msg || 'Failed to fetch bugs');
             }
 
-            console.log(`Total bugs fetched: ${data.bugs.length}`);
+            return data.bugs;
+        }
+
+        // Fetch data from Bugzilla API.
+        //
+        // Two queries are merged:
+        //   1. The S2 burndown core (bug_severity=S2) -- the dashboard's reason
+        //      for being.
+        //   2. Every open security-flagged bug in these components, at ANY
+        //      severity (including undesignated). This ensures security issues
+        //      aren't silently dropped just because they're not rated S2.
+        // The union is deduped by bug id.
+        async function fetchBugs(apiKey) {
+            const s2Params = buildBaseParams(apiKey);
+            s2Params.append('bug_severity', 'S2');
+
+            const secParams = buildBaseParams(apiKey);
+            secParams.append('keywords', SECURITY_KEYWORDS.join(','));
+            secParams.append('keywords_type', 'anywords');
+
+            const [s2Bugs, secBugs] = await Promise.all([
+                queryBugs(s2Params),
+                queryBugs(secParams)
+            ]);
+
+            console.log(`S2 bugs: ${s2Bugs.length}, security bugs (any severity): ${secBugs.length}`);
+
+            // Merge and dedupe by id (a bug can satisfy both queries)
+            const byId = new Map();
+            s2Bugs.forEach(bug => byId.set(bug.id, bug));
+            secBugs.forEach(bug => byId.set(bug.id, bug));
+            const bugs = Array.from(byId.values());
+
+            console.log(`Total bugs after merge/dedupe: ${bugs.length}`);
 
             // Filter out bugs with "meta" keyword
-            const nonMetaBugs = data.bugs.filter(bug => {
+            const nonMetaBugs = bugs.filter(bug => {
                 const keywords = bug.keywords || [];
                 return !keywords.includes('meta');
             });
@@ -797,6 +894,7 @@
                 component: 'component',
                 status: 'status',
                 priority: 'priority',
+                severity: 'severity',
                 assignee: 'assigned_to',
                 created: 'creation_time',
                 updated: 'last_change_time'
@@ -882,7 +980,8 @@
 
                 // Tag HTML - show only the specific keywords that are present.
                 // Order: security tags first (high -> moderate -> low), then
-                // stalled, and finally AI-involved.
+                // stalled, and finally AI-involved. (Severity now has its own
+                // column, so it's no longer shown as a badge here.)
                 let tagsHtml = '';
                 if (hasSecHigh) {
                     tagsHtml += `<span class="tag tag-sec-high" title="Has sec-high keyword"><i class="fas fa-shield-alt"></i> sec-high</span>`;
@@ -926,10 +1025,11 @@
                                 ${escapeHtml(bug.summary)}
                             </a>
                         </div>
-                        <div class="bug-data">${escapeHtml(bug.component || 'N/A')}</div>
-                        <div class="bug-data ${statusClass}">${escapeHtml(bug.status || 'N/A')}</div>
-                        <div class="bug-data ${priorityClass}">${escapeHtml(bug.priority || 'N/A')}</div>
-                        <div class="bug-data" title="${escapeHtml(bug.assigned_to || 'Unassigned')}">
+                        <div class="bug-data" data-label="Component">${escapeHtml(bug.component || 'N/A')}</div>
+                        <div class="bug-data ${statusClass}" data-label="Status">${escapeHtml(bug.status || 'N/A')}</div>
+                        <div class="bug-data ${priorityClass}" data-label="Priority">${escapeHtml(bug.priority || 'N/A')}</div>
+                        <div class="bug-data" data-label="Severity">${escapeHtml(bug.severity || 'N/A')}</div>
+                        <div class="bug-data" data-label="Assignee" title="${escapeHtml(bug.assigned_to || 'Unassigned')}">
                             ${escapeHtml(bug.assigned_to || '-')}
                         </div>
                         <div class="bug-data">
