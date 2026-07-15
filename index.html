@@ -556,6 +556,10 @@
                     </button>
                 </div>
                 <div class="control-group">
+                    <button class="reset-btn" onclick="copyBugListUrl(this)" title="Copy a Bugzilla buglist.cgi URL for all currently visible bugs to the clipboard">
+                        <i class="fas fa-clipboard"></i>
+                        Copy bug list URL
+                    </button>
                     <button class="reset-btn" onclick="resetFilters()" title="Re-enable all filter toggles">
                         <i class="fas fa-filter-circle-xmark"></i>
                         Reset filters
@@ -862,6 +866,70 @@
             Object.keys(tagFilters).forEach(tag => { tagFilters[tag] = true; });
             document.querySelectorAll('.toggle-card').forEach(card => card.classList.add('enabled'));
             applyTagFilters();
+        }
+
+        // Build a Bugzilla buglist.cgi URL for every currently visible bug and
+        // copy it to the clipboard. Reflects the active filters (filteredBugs).
+        async function copyBugListUrl(btn) {
+            if (!filteredBugs.length) {
+                flashButton(btn, 'No visible bugs', 'fa-triangle-exclamation');
+                return;
+            }
+
+            const ids = filteredBugs.map(bug => bug.id).join(',');
+            const url = `https://bugzilla.mozilla.org/buglist.cgi?bug_id=${ids}`;
+
+            // 1. Modern async clipboard API. Requires a secure context and page
+            //    focus; often unavailable when the file is opened via file://.
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                try {
+                    await navigator.clipboard.writeText(url);
+                    flashButton(btn, 'Copied!', 'fa-check');
+                    return;
+                } catch (err) {
+                    console.warn('clipboard.writeText failed, falling back:', err);
+                }
+            }
+
+            // 2. Legacy execCommand copy via a temporary, selected textarea.
+            if (copyViaTextarea(url)) {
+                flashButton(btn, 'Copied!', 'fa-check');
+                return;
+            }
+
+            // 3. Last resort: surface the URL so it can be copied by hand. This
+            //    always works even when the clipboard is blocked entirely.
+            flashButton(btn, 'Copy manually', 'fa-triangle-exclamation');
+            window.prompt('Copy this Bugzilla URL:', url);
+        }
+
+        // Copy text using a temporary textarea + execCommand. Returns whether
+        // the copy reported success.
+        function copyViaTextarea(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.top = '0';
+            ta.style.left = '0';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            ta.setSelectionRange(0, text.length);
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+            document.body.removeChild(ta);
+            return ok;
+        }
+
+        // Briefly swap a button's icon + label to give click feedback, then
+        // restore its original contents.
+        function flashButton(btn, message, iconClass) {
+            if (!btn) return;
+            const original = btn.innerHTML;
+            btn.innerHTML = `<i class="fas ${iconClass}"></i> ${message}`;
+            setTimeout(() => { btn.innerHTML = original; }, 1500);
         }
 
         // Recompute the visible set from the tag filters, then sort + render
