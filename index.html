@@ -90,6 +90,76 @@
             margin-left: auto;
         }
 
+        /* Component leaderboard: a compact two-column tally of the currently
+           visible bugs, grouped by component and ranked by count. */
+        .leaderboard {
+            background-color: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px 16px;
+            min-width: 240px;
+        }
+
+        .leaderboard-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            /* Show ~5 components, then scroll the rest so the header stays a
+               consistent height regardless of how many are visible. */
+            max-height: 118px;
+            overflow-y: auto;
+            /* Keep the counts clear of the scrollbar. */
+            padding-right: 10px;
+        }
+
+        .leaderboard-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            font-size: 13px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+
+        .leaderboard-row:hover {
+            background-color: var(--bg-primary);
+        }
+
+        .leaderboard-row.active {
+            background-color: var(--accent-color);
+        }
+
+        .leaderboard-row.active .lb-component,
+        .leaderboard-row.active .lb-count {
+            color: #ffffff;
+        }
+
+        .leaderboard-row .lb-component {
+            color: var(--text-primary);
+        }
+
+        .leaderboard-row .lb-count {
+            color: var(--accent-color);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .leaderboard-empty {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
         .stats {
             display: flex;
             gap: 20px;
@@ -490,6 +560,12 @@
                     <h1>S2 Burndown Dashboard</h1>
                     <p class="subtitle">Mozilla Graphics S2 Bug Tracking</p>
                 </div>
+                <div class="leaderboard">
+                    <div class="leaderboard-title">Bugs by Component</div>
+                    <div class="leaderboard-list" id="leaderboardList">
+                        <div class="leaderboard-empty">No bugs loaded yet.</div>
+                    </div>
+                </div>
                 <div class="stats">
                     <div class="stat-card toggle-card enabled toggle-other" data-tag="untagged" onclick="toggleTagFilter('untagged')" title="Toggle visibility of untagged bugs (those without any of the tags at right)">
                         <span class="icon">
@@ -637,6 +713,8 @@
         let filteredBugs = [];
         let sortColumn = 'id';
         let sortDirection = 'desc';
+        // Active component filter from the leaderboard; null means all.
+        let componentFilter = null;
 
         // Keyword-backed filter toggles; all enabled (visible) by default.
         const TAG_KEYWORDS = ['stalled', 'sec-high', 'sec-moderate', 'sec-low', 'ai-involved'];
@@ -717,6 +795,18 @@
             const storedApiKey = getCookie('bugzilla_api_key');
             if (storedApiKey) {
                 document.getElementById('apiKeyInput').value = storedApiKey;
+            }
+
+            // Delegate leaderboard clicks so rows re-rendered on each update
+            // stay interactive without re-binding.
+            const lbList = document.getElementById('leaderboardList');
+            if (lbList) {
+                lbList.addEventListener('click', (e) => {
+                    const row = e.target.closest('.leaderboard-row');
+                    if (row && row.dataset.component) {
+                        toggleComponentFilter(row.dataset.component);
+                    }
+                });
             }
 
             // Initial load
@@ -852,13 +942,29 @@
             }
         }
 
-        // A bug is visible if any tag it carries is toggled on. Bugs with none
-        // of TAG_KEYWORDS are governed by the 'untagged' toggle (first tile).
-        function isBugVisible(bug) {
+        // A bug passes the tag filters if any tag it carries is toggled on.
+        // Bugs with none of TAG_KEYWORDS are governed by the 'untagged' toggle
+        // (first tile).
+        function passesTagFilters(bug) {
             const keywords = bug.keywords || [];
             const present = TAG_KEYWORDS.filter(tag => keywords.includes(tag));
             if (present.length === 0) return tagFilters['untagged'];
             return present.some(tag => tagFilters[tag]);
+        }
+
+        // A bug is visible if it passes the tag filters and matches the active
+        // component filter (if any).
+        function isBugVisible(bug) {
+            if (!passesTagFilters(bug)) return false;
+            if (componentFilter && bug.component !== componentFilter) return false;
+            return true;
+        }
+
+        // Toggle the leaderboard's component filter. Clicking the active
+        // component clears it, showing all components again.
+        function toggleComponentFilter(component) {
+            componentFilter = (componentFilter === component) ? null : component;
+            applyTagFilters();
         }
 
         // Toggle a tag filter and refresh the view
@@ -869,10 +975,12 @@
             applyTagFilters();
         }
 
-        // Re-enable every filter toggle, showing all entries
+        // Re-enable every filter toggle and clear the component filter,
+        // showing all entries
         function resetFilters() {
             Object.keys(tagFilters).forEach(tag => { tagFilters[tag] = true; });
             document.querySelectorAll('.toggle-card').forEach(card => card.classList.add('enabled'));
+            componentFilter = null;
             applyTagFilters();
         }
 
@@ -945,6 +1053,43 @@
             filteredBugs = allBugs.filter(isBugVisible);
             applySort();
             updateStats();
+            updateLeaderboard();
+        }
+
+        // Tally bugs by component and render the leaderboard, ranked by count
+        // (ties broken alphabetically). Counts reflect the tag filters but
+        // ignore the component filter, so every component stays visible and
+        // clickable; the active component is highlighted.
+        function updateLeaderboard() {
+            const el = document.getElementById('leaderboardList');
+            if (!el) return;
+
+            const counts = {};
+            allBugs.filter(passesTagFilters).forEach(bug => {
+                const comp = bug.component || 'Unknown';
+                counts[comp] = (counts[comp] || 0) + 1;
+            });
+
+            const rows = Object.entries(counts)
+                .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+            if (!rows.length) {
+                el.innerHTML = '<div class="leaderboard-empty">No visible bugs.</div>';
+                return;
+            }
+
+            el.innerHTML = rows.map(([comp, count]) => {
+                const active = comp === componentFilter ? ' active' : '';
+                const title = comp === componentFilter
+                    ? `Showing only ${comp} — click to clear`
+                    : `Click to show only ${comp}`;
+                return `
+                    <div class="leaderboard-row${active}" data-component="${escapeHtml(comp)}" title="${escapeHtml(title)}">
+                        <span class="lb-component">${escapeHtml(comp)}</span>
+                        <span class="lb-count">${count}</span>
+                    </div>
+                `;
+            }).join('');
         }
 
         // Reflect the current sort column/direction in the header icons
