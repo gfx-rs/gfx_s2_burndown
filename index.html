@@ -200,7 +200,7 @@
             color: #ffffff;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
             background-color: var(--toggle-base);
-            transition: background-color 0.2s, opacity 0.2s, box-shadow 0.2s, transform 0.1s;
+            transition: background-color 0.2s, opacity 0.2s, box-shadow 0.2s, transform 0.1s, filter 0.2s;
         }
 
         .toggle-card.enabled {
@@ -210,6 +210,16 @@
 
         .toggle-card:not(.enabled) {
             opacity: 0.6;
+        }
+
+        /* In light mode the enabled/disabled toggle states sit too close in
+           contrast, so dim + desaturate the disabled tiles more aggressively.
+           Scoped to light so dark mode is untouched. */
+        @media (prefers-color-scheme: light) {
+            .toggle-card:not(.enabled) {
+                opacity: 0.5;
+                filter: grayscale(0.7);
+            }
         }
 
         .toggle-card:hover {
@@ -1171,16 +1181,23 @@
 
         // Update statistics. Total reflects the currently visible set; the
         // per-tag counts are a stable inventory of the full fetched dataset.
+        // A disabled tile shows an em-dash instead of its count, a
+        // color-independent cue that its filter is off.
         function updateStats() {
             const countWithKeyword = keyword =>
                 allBugs.filter(bug => (bug.keywords || []).includes(keyword)).length;
 
-            document.getElementById('totalCount').textContent = filteredBugs.length;
-            document.getElementById('stalledCount').textContent = countWithKeyword('stalled');
-            document.getElementById('secHighCount').textContent = countWithKeyword('sec-high');
-            document.getElementById('secModerateCount').textContent = countWithKeyword('sec-moderate');
-            document.getElementById('secLowCount').textContent = countWithKeyword('sec-low');
-            document.getElementById('aiInvolvedCount').textContent = countWithKeyword('ai-involved');
+            // Show the value when the tile's filter is enabled, else an em-dash.
+            const setCount = (id, tag, value) => {
+                document.getElementById(id).textContent = tagFilters[tag] ? value : '—';
+            };
+
+            setCount('totalCount', 'untagged', filteredBugs.length);
+            setCount('stalledCount', 'stalled', countWithKeyword('stalled'));
+            setCount('secHighCount', 'sec-high', countWithKeyword('sec-high'));
+            setCount('secModerateCount', 'sec-moderate', countWithKeyword('sec-moderate'));
+            setCount('secLowCount', 'sec-low', countWithKeyword('sec-low'));
+            setCount('aiInvolvedCount', 'ai-involved', countWithKeyword('ai-involved'));
         }
 
         // Render bugs
