@@ -438,6 +438,12 @@
         .status-open { color: var(--danger-color); }
         .status-closed { color: var(--text-muted); }
 
+        /* Unassigned bugs (nobody@mozilla.org) stand out in green. */
+        .assignee-unassigned {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
         .tag {
             display: inline-flex;
             align-items: center;
@@ -1237,6 +1243,12 @@
                 const isClosed = !bug.is_open;
                 if (isClosed) statusClass = 'status-closed';
 
+                // Highlight unassigned bugs (nobody@mozilla.org or empty) so
+                // they stand out as needing an owner.
+                const assignee = bug.assigned_to || '';
+                const isUnassigned = !assignee || assignee.toLowerCase() === 'nobody@mozilla.org';
+                const assigneeClass = isUnassigned ? 'assignee-unassigned' : '';
+
                 return `
                     <div class="bug-entry">
                         <div class="bug-number">${bug.id}</div>
@@ -1250,7 +1262,7 @@
                         <div class="bug-data ${statusClass}" data-label="Status">${escapeHtml(bug.status || 'N/A')}</div>
                         <div class="bug-data ${priorityClass}" data-label="Priority">${escapeHtml(bug.priority || 'N/A')}</div>
                         <div class="bug-data" data-label="Severity">${escapeHtml(bug.severity || 'N/A')}</div>
-                        <div class="bug-data" data-label="Assignee" title="${escapeHtml(bug.assigned_to || 'Unassigned')}">
+                        <div class="bug-data ${assigneeClass}" data-label="Assignee" title="${escapeHtml(bug.assigned_to || 'Unassigned')}">
                             ${escapeHtml(bug.assigned_to || '-')}
                         </div>
                         <div class="bug-data">
